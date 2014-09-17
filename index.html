@@ -74,7 +74,7 @@ CVTrain &lt;- CleanedTrainingSet1[-Sample1,]
 <h3>
 <a name="building-a-model" class="anchor" href="#building-a-model"><span class="octicon octicon-link"></span></a>Building a Model</h3>
 
-<p>I then build my model, predicting the classe variable utilizing a Random Forest algorithm as called inside the train() function. I then use this model to predict the values of the sample from which I constructed my model (SampleTrain). The results are then stored and presented in a confusion matrix.</p>
+<p>I then build my model, predicting the classe variable utilizing a Random Forest algorithm as called inside the train() function. I then use this model to predict the values of the sample from which I constructed my model (SampleTrain). The results are then stored in a confusion matrix.</p>
 
 <pre lang="r,"><code>RFTrain &lt;- train(classe ~., method="rf", data=SampleTrain)
 Prediction1 &lt;- predict(RFTrain$finalModel, SampleTrain)
@@ -85,7 +85,7 @@ Prediction1.Summary
 <h3>
 <a name="cross-validating-the-model" class="anchor" href="#cross-validating-the-model"><span class="octicon octicon-link"></span></a>Cross-Validating the Model</h3>
 
-<p>As the results above suggest, the model I have built predicts the classe outcome with perfect accuracy. However, this level of accuracy could be misleading as it might be the result of overfitting. Therefore, I cross-validate my model on two samples drawn at random from the half of the training set I did not use to construct my model (CVTrain).</p>
+<p>The model I have built performs exceptionally well, as it predicts the classe outcome with perfect accuracy. However, this level of accuracy could be misleading as it might be the result of overfitting. Therefore, I cross-validate my model on two samples drawn at random from the half of the training set I did not use to construct my model (CVTrain).</p>
 
 <pre lang="r,"><code>set.seed(51)
 Sample2 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F)
@@ -95,7 +95,7 @@ Prediction2.Summary &lt;- confusionMatrix(CVSample1$classe, Prediction2)
 Prediction2.Summary
 </code></pre>
 
-<p>As the numbers above indicate, the model proves highly accurate in its first out-of-sample test: it correctly predicts 99.2% of the actual values. Below, the second out-of-sample prediction shows similar levels of accuracy: it correctly predicts 98.8% of the actual values. Accordingly, I expect the out-of-sample error for my model to be approximately 1%.</p>
+<p>The model proves highly accurate in its first out-of-sample test: it correctly predicts 99.2% of the actual values. Below, the second out-of-sample prediction demonstrates similar levels of accuracy: it correctly predicts 98.8% of the actual values. Accordingly, I expect the out-of-sample error for my model to be approximately 1%.</p>
 
 <pre lang="r,"><code>set.seed(81)
 Sample3 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F)
@@ -118,7 +118,7 @@ CleanedTestingSet &lt;- CleanedTestingSet[,-c(1:7)]
 CleanedTestingSet &lt;- CleanedTestingSet[, !sapply(CleanedTestingSet, is.factor)]
 </code></pre>
 
-<p>Once the testing set has been properly prepared, I predict its "classe" values using my model. The 20 predicted outcomes can be seen below. All 20 predictions are correct: the model has performed very well on the testing set.</p>
+<p>Once the testing set has been properly prepared, I predict its "classe" values using my model.</p>
 
 <pre lang="r,"><code>PredictionFinal &lt;- predict(RFTrain$finalModel, CleanedTestingSet)
 PredictionFinal
