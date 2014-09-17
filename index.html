@@ -31,37 +31,103 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <hr><p>title: "Predicting Exerice Movements Using a Random Forest Algorithm"</p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h2>
+<a name="output-word_document" class="anchor" href="#output-word_document"><span class="octicon octicon-link"></span></a>output: word_document</h2>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<p><strong><em>Ben Piggot</em></strong></p>
+
+<p><strong><em>September 17, 2014</em></strong></p>
+
+<h3>
+<a name="synopsis" class="anchor" href="#synopsis"><span class="octicon octicon-link"></span></a>Synopsis</h3>
+
+<p>This brief analysis makes use of data used by Velloso et al. in their 2013 study, "Qualitative Activity Recognition of Weight Lifting Exercises." (See: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a> for more information). Using this data, it creates a model designed to predict the manner in which individuals perform weightlifting exercises.</p>
+
+<h3>
+<a name="data-processing" class="anchor" href="#data-processing"><span class="octicon octicon-link"></span></a>Data Processing</h3>
+
+<p>My first step is to load in the training set data I use to build my model from the url below. Additionally, I load the plyr, caret, and randomForest packages.</p>
+
+<pre lang="r,"><code>myurl &lt;- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+download.file(url=myurl, destfile="pml-training.csv", method="curl")
+TrainingSet &lt;- read.csv("pml-training.csv")
+library(plyr)
+library(caret)
+library(randomForest)
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>Once the data is loaded into my working directory, I clean the original training set. I remove variables that largely consist of missing data and variables that do not measure physical activity. I also eliminate variables that R falsely recognizes to be factor variables, but which in fact mostly contain missing or garbled information in the original .csv file. I make sure to remove and then re-attach the "classe" variability to my training set before eliminating the rest of the factors in the Training Set. The "classe" variable measures the outcome of interest in my analysis. As a result of my cleaning, the number of variables I will use in my model is reduced from 161 to 53.</p>
+
+<pre lang="r,"><code>CleanedTrainingSet &lt;- TrainingSet[ , colSums(is.na(TrainingSet)) &lt; 15000] 
+CleanedTrainingSet &lt;- CleanedTrainingSet[,-c(1:7)]
+CleanedTrainingSet1 &lt;- CleanedTrainingSet[,-86]
+CleanedTrainingSet1 &lt;- CleanedTrainingSet1[, !sapply(CleanedTrainingSet1, is.factor)]
+CleanedTrainingSet1 &lt;- cbind(CleanedTrainingSet1, CleanedTrainingSet$classe)
+CleanedTrainingSet1 &lt;- rename(CleanedTrainingSet1, c("CleanedTrainingSet$classe"="classe"))
+</code></pre>
+
+<p>Next, I subset the cleaned training set into two halves. The first half will be used to construct my model; the second half will be used to cross-validate the model I build.</p>
+
+<pre lang="r,"><code>set.seed(21)
+Sample1&lt;- sample(1:dim(CleanedTrainingSet1)[1],size=dim(CleanedTrainingSet1)[1]/2,replace=F)
+SampleTrain &lt;- CleanedTrainingSet1[Sample1,]
+CVTrain &lt;- CleanedTrainingSet1[-Sample1,]
+</code></pre>
 
 <h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<a name="building-a-model" class="anchor" href="#building-a-model"><span class="octicon octicon-link"></span></a>Building a Model</h3>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>I then build my model, predicting the classe variable utilizing a Random Forest algorithm as called inside the train() function. I then use this model to predict the values of the sample from which I constructed my model (SampleTrain). The results are then stored and presented in a confusion matrix.</p>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<pre lang="r,"><code>RFTrain &lt;- train(classe ~., method="rf", data=SampleTrain)
+Prediction1 &lt;- predict(RFTrain$finalModel, SampleTrain)
+Prediction1.Summary &lt;- confusionMatrix(SampleTrain$classe, Prediction1)
+Prediction1.Summary
+</code></pre>
 
 <h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a name="cross-validating-the-model" class="anchor" href="#cross-validating-the-model"><span class="octicon octicon-link"></span></a>Cross-Validating the Model</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>As the results above suggest, the model I have built predicts the classe outcome with perfect accuracy. However, this level of accuracy could be misleading as it might be the result of overfitting. Therefore, I cross-validate my model on two samples drawn at random from the half of the training set I did not use to construct my model (CVTrain).</p>
+
+<pre lang="r,"><code>set.seed(51)
+Sample2 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F)
+CVSample1 &lt;- CVTrain[Sample2,]
+Prediction2 &lt;- predict(RFTrain$finalModel, CVSample1)
+Prediction2.Summary &lt;- confusionMatrix(CVSample1$classe, Prediction2)
+Prediction2.Summary
+</code></pre>
+
+<p>As the numbers above indicate, the model proves highly accurate in its first out-of-sample test: it correctly predicts 99.2% of the actual values. Below, the second out-of-sample prediction shows similar levels of accuracy: it correctly predicts 98.8% of the actual values. Accordingly, I expect the out-of-sample error for my model to be approximately 1%.</p>
+
+<pre lang="r,"><code>set.seed(81)
+Sample3 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F)
+CVSample2 &lt;- CVTrain[Sample3,]
+Prediction3 &lt;- predict(RFTrain$finalModel, CVSample2)
+Prediction3.Summary &lt;- confusionMatrix(CVSample2$classe, Prediction3)
+Prediction3.Summary
+</code></pre>
+
+<h3>
+<a name="testing-the-model" class="anchor" href="#testing-the-model"><span class="octicon octicon-link"></span></a>Testing the Model</h3>
+
+<p>Now that I am now quite confident my model accurately predicts exercise style as measured by the "classe" variable, I load in the testing set data. I then clean the testing set using the same procedures I used to clean the training set. </p>
+
+<pre lang="r,"><code>myurl &lt;- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+download.file(url=myurl, destfile="pml-testing.csv", method="curl")
+TestingSet &lt;- read.csv("pml-testing.csv")
+CleanedTestingSet &lt;- TestingSet[ , colSums(is.na(TestingSet)) &lt; 10] 
+CleanedTestingSet &lt;- CleanedTestingSet[,-c(1:7)]
+CleanedTestingSet &lt;- CleanedTestingSet[, !sapply(CleanedTestingSet, is.factor)]
+</code></pre>
+
+<p>Once the testing set has been properly prepared, I predict its "classe" values using my model. The 20 predicted outcomes can be seen below. All 20 predictions are correct: the model has performed very well on the testing set.</p>
+
+<pre lang="r,"><code>PredictionFinal &lt;- predict(RFTrain$finalModel, CleanedTestingSet)
+PredictionFinal
+</code></pre>
       </section>
     </div>
 
