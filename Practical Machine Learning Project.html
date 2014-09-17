@@ -64,18 +64,162 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <div id="data-processing" class="section level3">
 <h3>Data Processing</h3>
 <p>My first step is to load in the training set data I use to build my model from the url below. Additionally, I load the plyr, caret, and randomForest packages.</p>
-<p><code>{r, echo=TRUE} myurl &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot; download.file(url=myurl, destfile=&quot;pml-training.csv&quot;, method=&quot;curl&quot;) TrainingSet &lt;- read.csv(&quot;pml-training.csv&quot;) library(plyr) library(caret) library(randomForest)</code> Once the data is loaded into my working directory, I clean the original training set. I remove variables that largely consist of missing data and variables that do not measure physical activity. I also eliminate variables that R falsely recognizes to be factor variables, but which in fact mostly contain missing or garbled information in the original .csv file. I make sure to remove and then re-attach the “classe” variability to my training set before eliminating the rest of the factors in the Training Set. The “classe” variable measures the outcome of interest in my analysis. As a result of my cleaning, the number of variables I will use in my model is reduced from 161 to 53.</p>
-<p><code>{r, echo=TRUE} CleanedTrainingSet &lt;- TrainingSet[ , colSums(is.na(TrainingSet)) &lt; 15000]  CleanedTrainingSet &lt;- CleanedTrainingSet[,-c(1:7)] CleanedTrainingSet1 &lt;- CleanedTrainingSet[,-86] CleanedTrainingSet1 &lt;- CleanedTrainingSet1[, !sapply(CleanedTrainingSet1, is.factor)] CleanedTrainingSet1 &lt;- cbind(CleanedTrainingSet1, CleanedTrainingSet$classe) CleanedTrainingSet1 &lt;- rename(CleanedTrainingSet1, c(&quot;CleanedTrainingSet$classe&quot;=&quot;classe&quot;))</code> Next, I subset the cleaned training set into two halves. The first half will be used to construct my model; the second half will be used to cross-validate the model I build.</p>
-<p><code>{r, echo=TRUE} set.seed(21) Sample1&lt;- sample(1:dim(CleanedTrainingSet1)[1],size=dim(CleanedTrainingSet1)[1]/2,replace=F) SampleTrain &lt;- CleanedTrainingSet1[Sample1,] CVTrain &lt;- CleanedTrainingSet1[-Sample1,]</code> ### Building a Model I then build my model, predicting the classe variable utilizing a Random Forest algorithm as called inside the train() function. I then use this model to predict the values of the sample from which I constructed my model (SampleTrain). The results are then stored and presented in a confusion matrix.</p>
-<p><code>{r, echo=TRUE} RFTrain &lt;- train(classe ~., method=&quot;rf&quot;, data=SampleTrain) Prediction1 &lt;- predict(RFTrain$finalModel, SampleTrain) Prediction1.Summary &lt;- confusionMatrix(SampleTrain$classe, Prediction1) Prediction1.Summary</code></p>
+<pre class="r"><code>myurl &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;
+download.file(url=myurl, destfile=&quot;pml-training.csv&quot;, method=&quot;curl&quot;)
+TrainingSet &lt;- read.csv(&quot;pml-training.csv&quot;)
+library(plyr)
+library(caret)</code></pre>
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2</code></pre>
+<pre class="r"><code>library(randomForest)</code></pre>
+<pre><code>## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<p>Once the data is loaded into my working directory, I clean the original training set. I remove variables that largely consist of missing data and variables that do not measure physical activity. I also eliminate variables that R falsely recognizes to be factor variables, but which in fact mostly contain missing or garbled information in the original .csv file. I make sure to remove and then re-attach the “classe” variability to my training set before eliminating the rest of the factors in the Training Set. The “classe” variable measures the outcome of interest in my analysis. As a result of my cleaning, the number of variables I will use in my model is reduced from 161 to 53.</p>
+<pre class="r"><code>CleanedTrainingSet &lt;- TrainingSet[ , colSums(is.na(TrainingSet)) &lt; 15000] 
+CleanedTrainingSet &lt;- CleanedTrainingSet[,-c(1:7)]
+CleanedTrainingSet1 &lt;- CleanedTrainingSet[,-86]
+CleanedTrainingSet1 &lt;- CleanedTrainingSet1[, !sapply(CleanedTrainingSet1, is.factor)]
+CleanedTrainingSet1 &lt;- cbind(CleanedTrainingSet1, CleanedTrainingSet$classe)
+CleanedTrainingSet1 &lt;- rename(CleanedTrainingSet1, c(&quot;CleanedTrainingSet$classe&quot;=&quot;classe&quot;))</code></pre>
+<p>Next, I subset the cleaned training set into two halves. The first half will be used to construct my model; the second half will be used to cross-validate the model I build.</p>
+<pre class="r"><code>set.seed(21)
+Sample1&lt;- sample(1:dim(CleanedTrainingSet1)[1],size=dim(CleanedTrainingSet1)[1]/2,replace=F)
+SampleTrain &lt;- CleanedTrainingSet1[Sample1,]
+CVTrain &lt;- CleanedTrainingSet1[-Sample1,]</code></pre>
+</div>
+<div id="building-a-model" class="section level3">
+<h3>Building a Model</h3>
+<p>I then build my model, predicting the classe variable utilizing a Random Forest algorithm as called inside the train() function. I then use this model to predict the values of the sample from which I constructed my model (SampleTrain). The results are then stored and presented in a confusion matrix.</p>
+<pre class="r"><code>RFTrain &lt;- train(classe ~., method=&quot;rf&quot;, data=SampleTrain)
+Prediction1 &lt;- predict(RFTrain$finalModel, SampleTrain)
+Prediction1.Summary &lt;- confusionMatrix(SampleTrain$classe, Prediction1)
+Prediction1.Summary</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 2807    0    0    0    0
+##          B    0 1886    0    0    0
+##          C    0    0 1691    0    0
+##          D    0    0    0 1640    0
+##          E    0    0    0    0 1787
+## 
+## Overall Statistics
+##                                 
+##                Accuracy : 1     
+##                  95% CI : (1, 1)
+##     No Information Rate : 0.286 
+##     P-Value [Acc &gt; NIR] : &lt;2e-16
+##                                 
+##                   Kappa : 1     
+##  Mcnemar's Test P-Value : NA    
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity             1.000    1.000    1.000    1.000    1.000
+## Specificity             1.000    1.000    1.000    1.000    1.000
+## Pos Pred Value          1.000    1.000    1.000    1.000    1.000
+## Neg Pred Value          1.000    1.000    1.000    1.000    1.000
+## Prevalence              0.286    0.192    0.172    0.167    0.182
+## Detection Rate          0.286    0.192    0.172    0.167    0.182
+## Detection Prevalence    0.286    0.192    0.172    0.167    0.182
+## Balanced Accuracy       1.000    1.000    1.000    1.000    1.000</code></pre>
 </div>
 <div id="cross-validating-the-model" class="section level3">
 <h3>Cross-Validating the Model</h3>
 <p>As the results above suggest, the model I have built predicts the classe outcome with perfect accuracy. However, this level of accuracy could be misleading as it might be the result of overfitting. Therefore, I cross-validate my model on two samples drawn at random from the half of the training set I did not use to construct my model (CVTrain).</p>
-<p><code>{r, echo=TRUE} set.seed(51) Sample2 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F) CVSample1 &lt;- CVTrain[Sample2,] Prediction2 &lt;- predict(RFTrain$finalModel, CVSample1) Prediction2.Summary &lt;- confusionMatrix(CVSample1$classe, Prediction2) Prediction2.Summary</code> As the numbers above indicate, the model proves highly accurate in its first out-of-sample test: it correctly predicts 99.2% of the actual values. Below, the second out-of-sample prediction shows similar levels of accuracy: it correctly predicts 98.8% of the actual values. Accordingly, I expect the out-of-sample error for my model to be approximately 1%.</p>
-<p><code>{r, echo=TRUE} set.seed(81) Sample3 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F) CVSample2 &lt;- CVTrain[Sample3,] Prediction3 &lt;- predict(RFTrain$finalModel, CVSample2) Prediction3.Summary &lt;- confusionMatrix(CVSample2$classe, Prediction3) Prediction3.Summary</code> ### Testing the Model Now that I am now quite confident my model accurately predicts exercise style as measured by the “classe” variable, I load in the testing set data. I then clean the testing set using the same procedures I used to clean the training set.</p>
-<p><code>{r, echo=TRUE} myurl &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot; download.file(url=myurl, destfile=&quot;pml-testing.csv&quot;, method=&quot;curl&quot;) TestingSet &lt;- read.csv(&quot;pml-testing.csv&quot;) CleanedTestingSet &lt;- TestingSet[ , colSums(is.na(TestingSet)) &lt; 10]  CleanedTestingSet &lt;- CleanedTestingSet[,-c(1:7)] CleanedTestingSet &lt;- CleanedTestingSet[, !sapply(CleanedTestingSet, is.factor)]</code> Once the testing set has been properly prepared, I predict its “classe” values using my model. The 20 predicted outcomes can be seen below. All 20 predictions are correct: the model has performed very well on the testing set.</p>
-<p><code>{r, echo=TRUE} PredictionFinal &lt;- predict(RFTrain$finalModel, CleanedTestingSet) PredictionFinal</code></p>
+<pre class="r"><code>set.seed(51)
+Sample2 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F)
+CVSample1 &lt;- CVTrain[Sample2,]
+Prediction2 &lt;- predict(RFTrain$finalModel, CVSample1)
+Prediction2.Summary &lt;- confusionMatrix(CVSample1$classe, Prediction2)
+Prediction2.Summary</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   A   B   C   D   E
+##          A 150   0   0   0   0
+##          B   3 109   0   0   0
+##          C   0   0  66   0   0
+##          D   0   0   0  66   0
+##          E   0   1   0   0  95
+## 
+## Overall Statistics
+##                                         
+##                Accuracy : 0.992         
+##                  95% CI : (0.979, 0.998)
+##     No Information Rate : 0.312         
+##     P-Value [Acc &gt; NIR] : &lt;2e-16        
+##                                         
+##                   Kappa : 0.99          
+##  Mcnemar's Test P-Value : NA            
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity             0.980    0.991    1.000    1.000    1.000
+## Specificity             1.000    0.992    1.000    1.000    0.997
+## Pos Pred Value          1.000    0.973    1.000    1.000    0.990
+## Neg Pred Value          0.991    0.997    1.000    1.000    1.000
+## Prevalence              0.312    0.224    0.135    0.135    0.194
+## Detection Rate          0.306    0.222    0.135    0.135    0.194
+## Detection Prevalence    0.306    0.229    0.135    0.135    0.196
+## Balanced Accuracy       0.990    0.992    1.000    1.000    0.999</code></pre>
+<p>As the numbers above indicate, the model proves highly accurate in its first out-of-sample test: it correctly predicts 99.2% of the actual values. Below, the second out-of-sample prediction shows similar levels of accuracy: it correctly predicts 98.8% of the actual values. Accordingly, I expect the out-of-sample error for my model to be approximately 1%.</p>
+<pre class="r"><code>set.seed(81)
+Sample3 &lt;- sample(1:dim(CVTrain)[1],size=dim(CVTrain)[1]/20,replace=F)
+CVSample2 &lt;- CVTrain[Sample3,]
+Prediction3 &lt;- predict(RFTrain$finalModel, CVSample2)
+Prediction3.Summary &lt;- confusionMatrix(CVSample2$classe, Prediction3)
+Prediction3.Summary</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction   A   B   C   D   E
+##          A 139   0   0   0   0
+##          B   2 103   0   0   0
+##          C   0   1  80   0   0
+##          D   0   0   0  75   1
+##          E   0   1   1   0  87
+## 
+## Overall Statistics
+##                                         
+##                Accuracy : 0.988         
+##                  95% CI : (0.974, 0.995)
+##     No Information Rate : 0.288         
+##     P-Value [Acc &gt; NIR] : &lt;2e-16        
+##                                         
+##                   Kappa : 0.984         
+##  Mcnemar's Test P-Value : NA            
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity             0.986    0.981    0.988    1.000    0.989
+## Specificity             1.000    0.995    0.998    0.998    0.995
+## Pos Pred Value          1.000    0.981    0.988    0.987    0.978
+## Neg Pred Value          0.994    0.995    0.998    1.000    0.998
+## Prevalence              0.288    0.214    0.165    0.153    0.180
+## Detection Rate          0.284    0.210    0.163    0.153    0.178
+## Detection Prevalence    0.284    0.214    0.165    0.155    0.182
+## Balanced Accuracy       0.993    0.988    0.993    0.999    0.992</code></pre>
+</div>
+<div id="testing-the-model" class="section level3">
+<h3>Testing the Model</h3>
+<p>Now that I am now quite confident my model accurately predicts exercise style as measured by the “classe” variable, I load in the testing set data. I then clean the testing set using the same procedures I used to clean the training set.</p>
+<pre class="r"><code>myurl &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;
+download.file(url=myurl, destfile=&quot;pml-testing.csv&quot;, method=&quot;curl&quot;)
+TestingSet &lt;- read.csv(&quot;pml-testing.csv&quot;)
+CleanedTestingSet &lt;- TestingSet[ , colSums(is.na(TestingSet)) &lt; 10] 
+CleanedTestingSet &lt;- CleanedTestingSet[,-c(1:7)]
+CleanedTestingSet &lt;- CleanedTestingSet[, !sapply(CleanedTestingSet, is.factor)]</code></pre>
+<p>Once the testing set has been properly prepared, I predict its “classe” values using my model. The 20 predicted outcomes can be seen below. All 20 predictions are correct: the model has performed very well on the testing set.</p>
+<pre class="r"><code>PredictionFinal &lt;- predict(RFTrain$finalModel, CleanedTestingSet)
+PredictionFinal</code></pre>
+<pre><code>##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+##  B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
+## Levels: A B C D E</code></pre>
 </div>
 
 
